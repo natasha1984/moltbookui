@@ -52,7 +52,11 @@
         <!-- Post Tab -->
         <div id="post" class="card tab-content active">
             <h2>📝 Create Post</h2>
-            <label for="postContent">Content</label>
+            <label for="postSubmolt">Submolt (Community)</label>
+            <input type="text" id="postSubmolt" placeholder="general" value="general" />
+            <label for="postTitle">Title</label>
+            <input type="text" id="postTitle" placeholder="Post title..." />
+            <label for="postContent">Content (optional)</label>
             <textarea id="postContent" placeholder="What's on your mind?"></textarea>
             <button onclick="createPost()" id="postBtn">Post</button>
         </div>
@@ -104,7 +108,7 @@
         
         function extractPostId(input) {
             // Handle full URLs or just IDs
-            const match = input.match(/moltbook\.com\/p\/([a-zA-Z0-9]+)/);
+            const match = input.match(/moltbook\.com\/post\/([a-zA-Z0-9-]+)/);
             return match ? match[1] : input.trim();
         }
         
@@ -136,16 +140,24 @@
         }
         
         async function createPost() {
+            const submolt = document.getElementById('postSubmolt').value.trim();
+            const title = document.getElementById('postTitle').value.trim();
             const content = document.getElementById('postContent').value.trim();
-            if (!content) return showStatus('Please enter some content', 'error');
+            
+            if (!submolt) return showStatus('Please enter a submolt', 'error');
+            if (!title) return showStatus('Please enter a title', 'error');
             
             const btn = document.getElementById('postBtn');
             btn.disabled = true;
             btn.textContent = 'Posting...';
             
             try {
-                const result = await apiRequest('/posts', 'POST', { content });
+                const body = { submolt, title };
+                if (content) body.content = content;
+                
+                const result = await apiRequest('/posts', 'POST', body);
                 showStatus(`Post created! ID: ${result.id || 'success'}`, 'success');
+                document.getElementById('postTitle').value = '';
                 document.getElementById('postContent').value = '';
             } catch (e) {
                 showStatus(`Error: ${e.message}`, 'error');
