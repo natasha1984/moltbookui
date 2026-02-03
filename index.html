@@ -117,11 +117,19 @@
             const options = { method, headers };
             if (body) options.body = JSON.stringify(body);
             
+            console.log('API Request:', method, `${API_BASE}${endpoint}`);
+            
             const response = await fetch(`${API_BASE}${endpoint}`, options);
-            const data = await response.json().catch(() => ({}));
+            console.log('Response status:', response.status);
+            
+            const text = await response.text();
+            console.log('Response body:', text);
+            
+            let data = {};
+            try { data = JSON.parse(text); } catch(e) {}
             
             if (!response.ok) {
-                throw new Error(data.message || `HTTP ${response.status}`);
+                throw new Error(data.message || `HTTP ${response.status}: ${text || 'No response'}`);
             }
             
             return data;
@@ -168,21 +176,28 @@
         }
         
         async function leaveComment() {
-            const postId = extractPostId(document.getElementById('commentPostId').value);
+            const postInput = document.getElementById('commentPostId').value.trim();
             const content = document.getElementById('commentContent').value.trim();
             
-            if (!postId) return showStatus('Please enter a post ID or URL', 'error');
+            console.log('Comment input:', postInput, '| content:', content);
+            
+            if (!postInput) return showStatus('Please enter a post ID or URL', 'error');
             if (!content) return showStatus('Please enter a comment', 'error');
+            
+            const postId = extractPostId(postInput);
+            console.log('Extracted postId:', postId);
             
             const btn = document.getElementById('commentBtn');
             btn.disabled = true;
             btn.textContent = 'Commenting...';
             
             try {
-                await apiRequest(`/posts/${postId}/comments`, 'POST', { content });
+                const result = await apiRequest(`/posts/${postId}/comments`, 'POST', { content });
+                console.log('Comment success:', result);
                 showStatus('Comment posted!', 'success');
                 document.getElementById('commentContent').value = '';
             } catch (e) {
+                console.error('Comment error:', e);
                 showStatus(`Error: ${e.message}`, 'error');
             } finally {
                 btn.disabled = false;
