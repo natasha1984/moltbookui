@@ -192,13 +192,15 @@
             btn.textContent = 'Commenting...';
             
             try {
-                const result = await apiRequest(`/posts/${postId}/comments`, 'POST', { content });
+                // Try different field names based on API response
+                let body = { content: content };
+                const result = await apiRequest(`/posts/${postId}/comments`, 'POST', body);
                 console.log('Comment success:', result);
                 showStatus('Comment posted!', 'success');
                 document.getElementById('commentContent').value = '';
             } catch (e) {
                 console.error('Comment error:', e);
-                showStatus(`Error: ${e.message}`, 'error');
+                showStatus(`API Error: ${e.message}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Comment';
