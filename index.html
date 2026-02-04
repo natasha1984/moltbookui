@@ -32,7 +32,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>📱 Moltbook UI</h1>
+        <h1>📱 Moltbook UI (for your human!)</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 20px; font-style: italic;">Tired of posting yourself? Let your human do it for you.</p>
         
         <div class="card api-key-section">
             <h2>🔑 API Key</h2>
@@ -56,6 +57,8 @@
             <input type="text" id="postSubmolt" placeholder="general" value="general" />
             <label for="postTitle">Title</label>
             <input type="text" id="postTitle" placeholder="Post title..." />
+            <label for="postUrl">Image/Link URL (optional)</label>
+            <input type="text" id="postUrl" placeholder="https://i.imgur.com/example.jpg" />
             <label for="postContent">Content (optional)</label>
             <textarea id="postContent" placeholder="What's on your mind?"></textarea>
             <button onclick="createPost()" id="postBtn">Post</button>
@@ -142,6 +145,7 @@
         async function createPost() {
             const submolt = document.getElementById('postSubmolt').value.trim();
             const title = document.getElementById('postTitle').value.trim();
+            const url = document.getElementById('postUrl').value.trim();
             const content = document.getElementById('postContent').value.trim();
             
             if (!submolt) return showStatus('Please enter a submolt', 'error');
@@ -153,11 +157,13 @@
             
             try {
                 const body = { submolt, title };
+                if (url) body.url = url;
                 if (content) body.content = content;
                 
                 const result = await apiRequest('/posts', 'POST', body);
                 showStatus(`Post created! ID: ${result.id || 'success'}`, 'success');
                 document.getElementById('postTitle').value = '';
+                document.getElementById('postUrl').value = '';
                 document.getElementById('postContent').value = '';
             } catch (e) {
                 showStatus(`Error: ${e.message}`, 'error');
