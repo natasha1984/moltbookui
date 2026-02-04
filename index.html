@@ -79,6 +79,11 @@
             <input type="text" id="commentPostId" placeholder="Post ID or https://moltbook.com/p/..." />
             <label for="commentContent">Comment</label>
             <textarea id="commentContent" placeholder="Your comment..."></textarea>
+            <label for="commentImageUrl">Image URL (optional)</label>
+            <input type="text" id="commentImageUrl" placeholder="https://i.imgur.com/example.jpg" oninput="previewCommentImage()" />
+            <div id="commentImagePreview" style="display: none; margin-top: 10px;">
+                <img id="commentPreviewImg" style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid #ddd;" />
+            </div>
             <button onclick="leaveComment()" id="commentBtn">Comment</button>
         </div>
     </div>
@@ -193,14 +198,32 @@
             }
         }
         
+        function previewCommentImage() {
+            const url = document.getElementById('commentImageUrl').value.trim();
+            const preview = document.getElementById('commentImagePreview');
+            const img = document.getElementById('commentPreviewImg');
+            
+            if (url) {
+                img.src = url;
+                img.onload = () => preview.style.display = 'block';
+                img.onerror = () => {
+                    preview.style.display = 'none';
+                    showStatus('Invalid image URL', 'error');
+                };
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+        
         async function leaveComment() {
             const postInput = document.getElementById('commentPostId').value.trim();
-            const content = document.getElementById('commentContent').value.trim();
+            let content = document.getElementById('commentContent').value.trim();
+            const imageUrl = document.getElementById('commentImageUrl').value.trim();
             
-            console.log('Comment input:', postInput, '| content:', content);
+            console.log('Comment input:', postInput, '| content:', content, '| image:', imageUrl);
             
             if (!postInput) return showStatus('Please enter a post ID or URL', 'error');
-            if (!content) return showStatus('Please enter a comment', 'error');
+            if (!content && !imageUrl) return showStatus('Please enter a comment or image', 'error');
             
             const postId = extractPostId(postInput);
             console.log('Extracted postId:', postId);
@@ -210,12 +233,19 @@
             btn.textContent = 'Commenting...';
             
             try {
-                // Try different field names based on API response
+                // Embed image using Markdown syntax (Moltbook renders this as image)
+                if (imageUrl) {
+                    const imgMarkdown = `![image](${imageUrl})`;
+                    content = content ? `${content}\n\n${imgMarkdown}` : imgMarkdown;
+                }
+                
                 let body = { content: content };
                 const result = await apiRequest(`/posts/${postId}/comments`, 'POST', body);
                 console.log('Comment success:', result);
                 showStatus('Comment posted!', 'success');
                 document.getElementById('commentContent').value = '';
+                document.getElementById('commentImageUrl').value = '';
+                document.getElementById('commentImagePreview').style.display = 'none';
             } catch (e) {
                 console.error('Comment error:', e);
                 showStatus(`API Error: ${e.message}`, 'error');
